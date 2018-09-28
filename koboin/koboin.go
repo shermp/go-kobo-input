@@ -49,6 +49,7 @@ const (
 	absMTtouchWidthMajor eventCode = 0x30
 )
 
+// InputEvent is the struct that the linux input event system uses
 type InputEvent struct {
 	TimeSec  uint32
 	TimeUsec uint32
@@ -57,12 +58,14 @@ type InputEvent struct {
 	EvValue  int32
 }
 
+// TouchDevice hold information about the current screen
 type TouchDevice struct {
 	devFile    *os.File
 	viewWidth  int
 	viewHeight int
 }
 
+// New creates a new TouchDevice struct and returns it to the caller
 func New(inputPath string, vWidth, vHeight int) *TouchDevice {
 	t := &TouchDevice{}
 	f, err := os.OpenFile(inputPath, os.O_RDONLY, os.ModeDevice)
@@ -76,10 +79,12 @@ func New(inputPath string, vWidth, vHeight int) *TouchDevice {
 	return t
 }
 
+// Close closes the input event file
 func (t *TouchDevice) Close() {
 	t.devFile.Close()
 }
 
+// getEvPacket reads the input event file, and attempts to read an entire packet
 func (t *TouchDevice) getEvPacket() ([]InputEvent, error) {
 	err := error(nil)
 	// Keep looping until we have a complete event packet, signaled by a
@@ -115,6 +120,7 @@ func (t *TouchDevice) getEvPacket() ([]InputEvent, error) {
 	}
 }
 
+// GetInput returns the rotated x, y coordinates of where the user touches
 func (t *TouchDevice) GetInput() (rx, ry int, err error) {
 	err = nil
 	x, y := -1, -1
