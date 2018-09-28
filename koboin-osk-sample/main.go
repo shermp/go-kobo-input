@@ -33,13 +33,16 @@ import (
 )
 
 func main() {
+	// Get the input event filepath
 	touchPath := "/dev/input/event1"
+	// Create an input object
 	t := koboin.New(touchPath, 1080, 1440)
 	if t == nil {
 		return
 	}
 	defer t.Close()
 
+	// Create and init FBInk
 	cfg := gofbink.FBInkConfig{}
 	rCfg := gofbink.RestrictedConfig{}
 	rCfg.Fontmult = 3
@@ -49,6 +52,8 @@ func main() {
 	defer fb.Close()
 	fb.Init(&cfg)
 
+	// Use kobo-sim-usb to enter USBMS mode where we can use the
+	// touchscreen without unintended presses in Nickel
 	u, err := simusb.New(fb)
 	if err != nil {
 		fmt.Println(err)
@@ -63,18 +68,24 @@ func main() {
 	fb.Println("Welcome to the test!")
 	fb.Println("Have Fun!")
 
+	// Load a keymap file for the OSK
 	keymapJSON, _ := ioutil.ReadFile("./keymap-en_us.json")
 	km := osk.KeyMap{}
 	json.Unmarshal(keymapJSON, &km)
+	// Create an OSK
 	vk, _ := osk.New(&km, 1080, 1440)
 
+	// Generate an image of the OSK
 	vkPNG := "./osk-en_us.png"
 	vkFont := "./Roboto-Medium.ttf"
 	vk.CreateIMG(vkPNG, vkFont)
+	// Print the image to the screen. Its position on screen should match that stored
+	// in the keyboard object
 	fb.PrintImage(vkPNG, int16(vk.StartCoords.X), int16(vk.StartCoords.Y), &cfg)
 	runeStr := []rune{}
 	upperCase := false
 	cfg.Row = 16
+	// Read the input from the touch screen
 L:
 	for {
 		x, y, err := t.GetInput()
